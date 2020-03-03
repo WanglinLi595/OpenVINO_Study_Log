@@ -81,3 +81,15 @@
 ### 2.3 基于 VS2019 的开发环境配置
 
 - 要想在 VS2019 上使用 OPenVINO 进行加速优化，我们需要进行一系列的配置，包括：配置 VC++ 的包含目录，VC++ 的库目录，
+
+(1) 新建项目
+
+- 打开 VS2019 ，点击创建新项目，然后创建一个空项目。这里，我创建的项目名称为：openvino_project 。
+![creat_project](./doc_images/creat_project.png)
+
+(2) 设置 VS++ 目录
+
+- 在 VS2019 里面点击视图，然后点击其他窗口，再点击属性管理器。点击完成后，我们可以在右侧小窗口中看到属性管理器窗口。
+![attribute_set](./doc_images/attribute_set.png)
+- 然后在属性管理器窗口中双击 Debug|x64 ，进入 Debug 属性页。然后点击 VC++ 目录。接后，我们主要设置 **包含目录** 和 **库目录** 。
+![attribute_set_2](./doc_images/attribute_set_2.png)
