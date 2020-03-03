@@ -27,9 +27,21 @@
 
 - 本节主要讲解如何配置 OpenVINO ，包括如何安装 OpenVINO 以及如何在 VS2019 配置 OpenVINO 的开发环境。
 
-### 2.1 安装 OpenVINO
+### 2.1 准备工作
 
-- 安装 OpenVINO 主要步骤有：下载 OpenVINO
+- 在安装 OpenVINO 工具包之前，需安装一下软件:
+  - VS2015/VS2017/VS2019
+  - CMake 3.4 及以上版本（如果是 VS2019 ，需安装 CMake 3.14 版本或更高）
+  - Python 3.6.5 以上
+
+- 我的软件安装版本:
+  - VS2019 社区版
+  - CMake 3.16.0
+  - Python 3.6.9
+
+### 2.2 安装以及配置 OpenVINO
+
+- 安装 OpenVINO 主要步骤有：下载 OpenVINO ，安装 OpenVINO 工具包，初始化 OpenVINO ，运行测试 Demo
 
 (1) 下载 OpenVINO
 
@@ -38,4 +50,34 @@
 
 (2) 安装 OpenVINO 工具包
 
-### 2.2 基于 VS2019 的开发环境配置
+- 下载完 OpenVINO ，双击软件包，进入安装页面![install_openvino_toolkit](./doc_images/install_openvino_toolkit.png)
+- 注意安装路径以及选择全部的组件，然后一路点击 Next，最后点击 Finsh，组件安装完成。![openvino_toolkit_install_finish](./doc_images/openvino_toolkit_install_finish.png)
+
+(3) 初始化 OpenVINO
+
+- 打开 CMD ，然后进入以下目录
+
+    ```C++
+    C:\Program Files (x86)\IntelSWTools\openvino_2019.3.334\bin
+    ```
+
+- 输入 setupvars.bat ，执行初始化脚本
+![initialzed_openvino](./doc_images/initialized_openvino.png)
+
+(4) 运行测试 Demo
+
+- 进入以下目录
+
+    ```C++
+    C:\Program Files (x86)\IntelSWTools\openvino_2019.3.334\deployment_tools\demo
+    ```
+
+- 输入 demo_security_barrier_camera.bat ，执行测试脚本
+![run_demo](./doc_images/run_demo.png)
+
+- 如果 OpenVINO 安装成功，则会出现以下结果
+![demo_result](./doc_images/demo_result.png)
+
+### 2.3 基于 VS2019 的开发环境配置
+
+- 要想在 VS2019 上使用 OPenVINO 进行加速优化，我们需要进行一系列的配置，包括：配置 VC++ 的包含目录，VC++ 的库目录，
