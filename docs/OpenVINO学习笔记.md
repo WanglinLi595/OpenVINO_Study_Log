@@ -80,16 +80,144 @@
 
 ### 2.3 基于 VS2019 的开发环境配置
 
-- 要想在 VS2019 上使用 OPenVINO 进行加速优化，我们需要进行一系列的配置，包括：配置 VC++ 的包含目录，VC++ 的库目录，
+- 要想在 VS2019 上使用 OPenVINO 进行加速优化，我们需要进行一系列的配置，包括：配置 VC++ 的包含目录，VC++ 的库目录，附加依赖库，添加环境变量等。
 
 (1) 新建项目
 
 - 打开 VS2019 ，点击创建新项目，然后创建一个空项目。这里，我创建的项目名称为：openvino_project 。
 ![creat_project](./doc_images/creat_project.png)
 
-(2) 设置 VS++ 目录
+(2) 编译 samples
+
+- 编译 samples 是为了后面在 VS2019 里面添加库目录
+- 打开 cmd ，进入目录：
+
+  ```C++
+  C:\Program Files (x86)\IntelSWTools\openvino_2019.3.334\inference_engine\samples
+  ```
+
+- 执行 build_samples_msvc.bat 文件，完成编译
+![build_samples](./doc_images/build_samples.png)
+- 编译完成后，会在
+ 
+  ```C++
+  C:\Users\XXX\Documents\Intel
+  ```
+
+  生成一个 OpenVINO 文件夹
+
+- 然后进入 OpenVINO\inference_engine_samples_build 文件夹，然后使用 VS2019 打开 Samples.sln 文件。
+![Samples_file](./doc_images/Samples_file.png)
+
+- 打开文件后，右击解决方案，再点击生成解决方案
+![build_solution](./doc_images/build_solution.png)
+
+- 最后，我们会在
+
+  ```C++
+  C:\Users\LWL\Documents\Intel\OpenVINO\inference_engine_samples_build\intel64\Debug
+  ```
+
+  目录下生成一个，cpu_extension.lib 文件。这个文件我们会在后面用到。
+  ![cpu_extension](./doc_images/cpu_extension.png)
+
+(3) 设置 VS++ 目录
 
 - 在 VS2019 里面点击视图，然后点击其他窗口，再点击属性管理器。点击完成后，我们可以在右侧小窗口中看到属性管理器窗口。
 ![attribute_set](./doc_images/attribute_set.png)
 - 然后在属性管理器窗口中双击 Debug|x64 ，进入 Debug 属性页。然后点击 VC++ 目录。接后，我们主要设置 **包含目录** 和 **库目录** 。
 ![attribute_set_2](./doc_images/attribute_set_2.png)
+
+- 配置包含目录
+
+  ```C++
+  C:\Program Files %28x86%29\IntelSWTools\openvino_2019.3.334\deployment_tools\inference_engine\src\extension
+  C:\Program Files %28x86%29\IntelSWTools\openvino_2019.3.334\deployment_tools\inference_engine\include
+  C:\Program Files %28x86%29\IntelSWTools\openvino_2019.3.334\deployment_tools\inference_engine\samples\common\format_reader
+  C:\Program Files %28x86%29\IntelSWTools\openvino_2019.3.334\opencv\include\opencv2
+  C:\Program Files %28x86%29\IntelSWTools\openvino_2019.3.334\opencv\include
+  ```
+
+  ![set_include_meun](./doc_images/set_include_meun.png)
+
+- 配置库目录
+
+  ```C++
+  C:\Users\LWL\Documents\Intel\OpenVINO\inference_engine_samples_build\intel64\Debug
+  C:\Program Files %28x86%29\IntelSWTools\openvino_2019.3.334\deployment_tools\inference_engine\lib\intel64\Debug
+  C:\Program Files (x86)\IntelSWTools\openvino_2019.3.334\opencv\lib
+  ```
+
+  ![include_meun](./doc_images/include_meun.png)
+
+(4) 配置链接器
+
+- 我们需要添加一些附加依赖库
+![set_link](./doc_images/set_link.png)
+
+- 在附加依赖库添加
+
+  ```C++
+  inference_engined.lib
+  cpu_extension.lib
+  format_reader.lib
+  opencv_calib3d412d.lib
+  opencv_core412d.lib
+  opencv_dnn412d.lib
+  opencv_features2d412d.lib
+  opencv_flann412d.lib
+  opencv_gapi412d.lib
+  opencv_highgui412d.lib
+  opencv_imgcodecs412d.lib
+  opencv_imgproc412d.lib
+  opencv_ml412d.lib
+  opencv_objdetect412d.lib
+  opencv_photo412d.lib
+  opencv_stitching412d.lib
+  opencv_video412d.lib
+  opencv_videoio412d.lib
+  ```
+
+  ![link_lib](./doc_images/link_lib.png)
+
+(5) 添加环境变量
+
+ ```C++
+ C:\Program Files (x86)\IntelSWTools\openvino_2019.3.334\opencv\bin
+ C:\Program Files (x86)\IntelSWTools\openvino_2019.3.334\inference_engine\bin\intel64\Debug
+ C:\Program Files (x86)\IntelSWTools\openvino_2019.3.334\inference_engine\bin\intel64\Release
+ C:\Users\LWL\Documents\Intel\OpenVINO\inference_engine_samples_build\intel64\Debug
+ C:\Users\LWL\Documents\Intel\OpenVINO\inference_engine_samples_build\intel64\Release
+ ```
+
+ ![set_path_environment](./doc_images/set_path_environment.png)
+
+(6) 代码测试
+
+- 在测试代码前，我们需要重启 VS2019
+- 在源文件下添加 main.cpp 文件，然后输入代码：
+
+  ```C++
+  #include <opencv2/opencv.hpp>
+  #include <iostream>
+
+  using namespace cv;
+  using namespace std;
+
+  int main(int argc, char** argv)
+  {
+    Mat src = imread("./lenacolor.png");
+    imshow("input", src);
+    waitKey(0);
+    destroyAllWindows();
+    return 0;
+  }
+  ```
+
+  ![test_code](./doc_images/test_code.png)
+
+- 如果运行成功，则代表我们的 OpenVINO 开发环境以及配置成功。
+
+## 二. OpenVINO 使用
+
+### 2.1 OpenCV 中使用 IE 模块加速
