@@ -84,7 +84,7 @@
 
 (1) 新建项目
 
-- 打开 VS2019 ，点击创建新项目，然后创建一个空项目。这里，我创建的项目名称为：openvino_project 。
+- 打开 VS2019 ，点击创建新项目，然后创建一个空项目。这里，我创建的项目名称为：openvino_test 。
 ![creat_project](./doc_images/creat_project.png)
 
 (2) 编译 samples
@@ -221,3 +221,20 @@
 ## 二. OpenVINO 使用
 
 ### 2.1 OpenCV 中使用 IE 模块加速
+
+### 2.2 OpenCV 模型转换与加速
+
+(1) 安装 python 包
+
+- pip install defusedxml==0.5.0
+- pip install test_generator==0.1.1
+![uninstall_defusedxml](doc_images/uninstall_defusedxml.png)
+
+(2) 输入指令
+
+- python mo_tf.py --input_model E:\OpenVINO_Study_Log\ssd_mobilenet_v2_coco_2018_03_29\frozen_inference_graph.pb --tensorflow_use_custom_operations_config extensions\front\tf\ssd_v2_support.json --tensorflow_object_detection_api_pipeline_config E:\OpenVINO_Study_Log\ssd_mobilenet_v2_coco_2018_03_29\pipeline.config --output="detection_boxes,detection_scores,num_detections" --data_type FP32
+
+![create_xml_and_bin](./doc_images/create_xml_bin.png)
+
+(3) 代码测试
+# TODO
