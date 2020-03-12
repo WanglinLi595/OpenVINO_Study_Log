@@ -124,7 +124,7 @@
   C:\IntelSWTools\openvino_2020.1.033\deployment_tools\ngraph\lib
   ```
 
-  ![](./doc_images/set_environment_path.png)
+  ![set_environment_path](./doc_images/set_environment_path.png)
 
 - 有些可能路径不同，具体看自己的目录。
 
@@ -185,3 +185,62 @@
 - -i 参数默认为 cam，使用摄像头作为输入。也可以在 -i 后面加视频文件路径，使用视频输入。
 - -m 参数为模型文件下的 xml 文件。
 - -d 参数为使用执行的设备，这里使用 CPU 来执行。
+
+### 2.4 使用 OpenVINO 的 OpenCV 库
+
+- 本节主要记录如何使用 OpenVINO 中的 OpenCV
+
+(1) 建立新项目
+
+- 打开 VS2017 ，然后点击文件，点击新建，点击项目，然后选择空项目。
+![creat_new_project.png](./doc_images/creat_new_project.png)
+
+(2) 配置包含目录
+
+- 打开 Debug | x64 属性页 ，在 VC++ 的包含目录添加以下内容
+
+  ```C++
+  C:\IntelSWTools\openvino_2020.1.033\opencv\include
+  ```
+
+  ![set_opencv_include](./doc_images/set_opencv_include.png)
+
+(3) 配置库目录
+
+- 在 VC++ 的库目录添加以下内容
+
+  ```C++
+  C:\IntelSWTools\openvino_2020.1.033\opencv\lib
+  ```
+
+  ![set_opencv_lib](./doc_images/set_opencv_lib.png)
+
+(4) 配置环境变量
+
+- 在环境变量添加以下内容：
+
+  ```C++
+  C:\IntelSWTools\openvino_2020.1.033\opencv\include
+  ```
+
+(5) 运行测试代码
+
+- 在源文件添加新建项，命名：main.cpp 。在里面添加以下代码：
+
+  ```C++
+  #include <opencv2/opencv.hpp>
+  #include <iostream>
+
+  using namespace cv;
+
+  int main(int argc, char** argv) {
+    Mat src = imread("./lenacolor.png");  //读取图片
+    imshow("input", src); //显示图片
+    waitKey(0); //等待用户按键
+    destroyAllWindows(); //摧毁所有显示图片的窗口
+    return 0;
+  }
+  ```
+
+- 如果运行成功，会出现以下结果：
+![run_opencv_result](./doc_images/run_opencv_result.png)
