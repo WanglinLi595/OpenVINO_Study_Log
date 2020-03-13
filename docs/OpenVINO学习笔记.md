@@ -316,7 +316,7 @@
     C:\IntelSWTools\openvino_2020.1.033\opencv\lib
     ```
 
-### 3.2 模型下载与生成 pbtxt 文件
+(2) 模型下载与生成 pbtxt 文件
 
 - 在测试代码前，我们还需要一些准备工作。
 - 首先，我们需要下载模型文件。进入 [models](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md) , 选择下载 ssd_mobilenet_v2_coco 模型文件。  
@@ -332,7 +332,7 @@
 - 注意自己的各文件路径。
 - 接下来，我们就可以进行代码测试了。
 
-### 3.3 测试代码
+(3) 测试代码
 
 - 在项目的源文件里，新建 main.cpp 。输入以下代码：
 
@@ -396,7 +396,7 @@
   }
   ```
 
-### 3.3 运行结果比较
+(4) 运行结果比较
 
 - 如果 net.setPreferableBackend 的参数为：DNN_BACKEND_INFERENCE_ENGINE
 ![ie_result](./doc_images/ie_result.png)
