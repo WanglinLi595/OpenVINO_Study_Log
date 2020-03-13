@@ -215,7 +215,29 @@
 
   ![set_opencv_lib](./doc_images/set_opencv_lib.png)
 
-(4) 配置环境变量
+(4) 配置 链接器->输入
+
+- 在链接器->输入添加以下内容：
+  
+  ```C++
+    opencv_calib3d420d.lib
+    opencv_core420d.lib
+    opencv_dnn420d.lib
+    opencv_features2d420d.lib
+    opencv_flann420d.lib
+    opencv_gapi420d.lib
+    opencv_highgui420d.lib
+    opencv_imgcodecs420d.lib
+    opencv_imgproc420d.lib
+    opencv_ml420d.lib
+    opencv_objdetect420d.lib
+    opencv_photo420d.lib
+    opencv_stitching420d.lib
+    opencv_video420d.lib
+    opencv_videoio420d.lib
+  ```
+
+(5) 配置环境变量
 
 - 在环境变量添加以下内容：
 
@@ -223,7 +245,7 @@
   C:\IntelSWTools\openvino_2020.1.033\opencv\include
   ```
 
-(5) 运行测试代码
+(6) 运行测试代码
 
 - 在源文件添加新建项，命名：main.cpp 。在里面添加以下代码：
 
@@ -244,3 +266,143 @@
 
 - 如果运行成功，会出现以下结果：
 ![run_opencv_result](./doc_images/run_opencv_result.png)
+
+## 三. OpenVINO 初步使用
+
+- 本章主要记录 OpenVINO 的一些初步使用
+
+### 3.1 IE 模块加速
+
+- 本节主要记录使用 IE 模块来进行推理加速。
+
+(1) 编译环境配置
+
+- 先新建项目，然后配置属性页。
+- 将以下目录添加到配置包含目录
+
+  ```C++
+  C:\IntelSWTools\openvino_2020.1.033\opencv\include
+  ```
+
+- 将以下目录添加到配置库目录
+
+  ```C++
+  C:\IntelSWTools\openvino_2020.1.033\opencv\lib
+  ```
+
+- 将以下库添加到链接器输入
+
+    ```C++
+    opencv_calib3d420d.lib
+    opencv_core420d.lib
+    opencv_dnn420d.lib
+    opencv_features2d420d.lib
+    opencv_flann420d.lib
+    opencv_gapi420d.lib
+    opencv_highgui420d.lib
+    opencv_imgcodecs420d.lib
+    opencv_imgproc420d.lib
+    opencv_ml420d.lib
+    opencv_objdetect420d.lib
+    opencv_photo420d.lib
+    opencv_stitching420d.lib
+    opencv_video420d.lib
+    opencv_videoio420d.lib
+  ```
+
+- 配置环境变量
+
+    ```C++
+    C:\IntelSWTools\openvino_2020.1.033\opencv\lib
+    ```
+
+### 3.2 模型下载与生成 pbtxt 文件
+
+- 在测试代码前，我们还需要一些准备工作。
+- 首先，我们需要下载模型文件。进入 [models](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md) , 选择下载 ssd_mobilenet_v2_coco 模型文件。  
+![download_ssd_model](./doc_images/download_ssd_model.png)
+- 下载完成之后，我们还需要生成一个 pbtxt 文件，才能在 dnn 里面载入文件。
+- 在 opencv 编译文件目录中搜索 tf_text_graph_ssd.py ，然后在 tf_text_graph_ssd.py 文件夹中打开 cmd ，输入命令：
+  
+  ```C++
+  python tf_text_graph_ssd.py --input E:\OpenVINO_Study_Log\ssd_mobilenet_v2_coco_2018_03_29\frozen_inference_graph.pb --config E:\OpenVINO_Study_Log\ssd_mobilenet_v2_coco_2018_03_29\pipeline.config --output frozen_inference_graph.pbtxt
+  ```
+
+- 运行完成之后就会生成 pbtxt 文件。
+- 注意自己的各文件路径。
+- 接下来，我们就可以进行代码测试了。
+
+### 3.3 测试代码
+
+- 在项目的源文件里，新建 main.cpp 。输入以下代码：
+
+  ```C++
+  #include <opencv2/opencv.hpp>
+  #include <opencv2/dnn.hpp>
+  #include <iostream>
+
+  using namespace cv;
+  using namespace cv ::dnn;
+  using namespace std;
+
+  string model = "E:/OpenVINO_Study_Log/ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pb";
+  string config = "E:/OpenVINO_Study_Log/ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pbtxt";
+
+  int main(int argc, char** argv) {
+    Mat src = imread("C:/Users/LWL/Desktop/dl.jpg");	//读取图片
+    if (src.empty()) {
+      printf("Load image failed");
+      return -1;
+    }
+    Net net = readNetFromTensorflow(model, config);	// 载入模型网络
+    net.setPreferableBackend(DNN_BACKEND_INFERENCE_ENGINE);		// 指定计算后台设备
+    net.setPreferableTarget(DNN_TARGET_CPU);					// 指定计算设备
+
+    printf("ssd network model loaded...\n");
+    Mat blob = blobFromImage(src, 1.0, Size(300, 300), Scalar(), true, false, 5);
+    net.setInput(blob);
+    Mat detection = net.forward();
+
+    // 获取推断时间
+    vector<double> layerTimigs;
+    double freq = getTickFrequency() / 1000;
+    double time = net.getPerfProfile(layerTimigs) / freq;
+    ostringstream ss;
+    ss << "infernece:" << time << "ms";
+    putText(src, ss.str(), Point(50, 50), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 0, 0), 2, 8);	// 在图片上打印推理所用时间
+
+
+    Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
+    float threshold = 0.8;
+
+    // 圈出可能目标
+    for (int i = 7; i < detectionMat.rows; i++) {
+      float confidence = detectionMat.at<float>(i, 2);
+      if (confidence > threshold) {
+        int obj_index = (size_t)detectionMat.at<float>(i, 1);
+        float tl_x = detectionMat.at<float>(i, 3) * src.cols;
+        float tl_y = detectionMat.at<float>(i, 4) * src.rows;
+        float br_x = detectionMat.at<float>(i, 5) * src.cols;
+        float br_y = detectionMat.at<float>(i, 6) * src.rows;
+        Rect object_box((int)tl_x, (int)tl_y, int(br_x - tl_x), int(br_y - tl_y));
+        rectangle(src, object_box, Scalar(0, 0, 255), 2, 8, 0);
+      }
+    }
+
+    imshow("ssd_detection", src);			// 显示图片
+    waitKey(0);								// 等待用户按键
+    destroyAllWindows();					// 摧毁所有显示图片的窗口
+    return 0;
+  }
+  ```
+
+### 3.3 运行结果比较
+
+- 如果 net.setPreferableBackend 的参数为：DNN_BACKEND_INFERENCE_ENGINE
+![ie_result](./doc_images/ie_result.png)
+
+- 如果 net.setPreferableBackend 的参数为：DNN_BACKEND_OPENCV
+![ie_result](./doc_images/ie_no_use_result.png)
+
+- 从上面两图可以看出，如果使用 ie ，可以有 4 到 5 倍的加速效果。
+- 这还是由于我的 cpu 代数比较低，如果使用 5 代以上的 cpu，差不多可以有 10 倍加速效果。
