@@ -376,7 +376,7 @@
     float threshold = 0.8;
 
     // 圈出可能目标
-    for (int i = 7; i < detectionMat.rows; i++) {
+    for (int i = 0; i < detectionMat.rows; i++) {
       float confidence = detectionMat.at<float>(i, 2);
       if (confidence > threshold) {
         int obj_index = (size_t)detectionMat.at<float>(i, 1);
@@ -406,3 +406,108 @@
 
 - 从上面两图可以看出，如果使用 ie ，可以有 4 到 5 倍的加速效果。
 - 这还是由于我的 cpu 代数比较低，如果使用 5 代以上的 cpu，差不多可以有 10 倍加速效果。
+
+### 3.2 OpenVINO 模型转换工具
+
+- 在读取模型的使用，我们不仅仅能用 readNetFromTensorflow ，还能用 readNetFromModelOptimizer ，今天我们就来记录一下，怎么使用 readNetFromModelOptimizer 读取模型文件。
+
+(1) 进行模型转换
+
+- 在使用 readNetFromModelOptimizer 我们要做的第一件事，就是要进行模型文件转换。
+- 由于我们下载的模型文件 pb 格式的，但是 readNetFromModelOptimizer 要求的模型文件格式是 xml 和 bin 。
+- 在进行模型转换的时候，我们需要用到 mo_tf.py python 脚本文件（针对 tensorflow 的模型文件）。
+- 在进行模型转换的时候，我们要用到的指令为：
+
+  ```C++
+  python mo_tf.py --input_model <pb file> --tensorflow_use_custom_operations_config <json file> --tensorflow_object_detection_api_pipeline_config <config file> --output="detection_boxes,detection_scores,num_detections" --data_type FP16
+  ```
+
+- 下面使用 ssd_mobilenet_v2_coco 模型来做一下转换，在 CMD 里面输入指令：
+
+  ```C++
+  python mo_tf.py --input_model E:\OpenVINO_Study_Log\ssd_mobilenet_v2_coco_2018_03_29\frozen_inference_graph.pb --tensorflow_use_custom_operations_config extensions\front\tf\ssd_v2_support.json --tensorflow_object_detection_api_pipeline_config E:\OpenVINO_Study_Log\ssd_mobilenet_v2_coco_2018_03_29\pipeline.config --output="detection_boxes,detection_scores,num_detections" --data_type FP16
+  ```
+
+  ![translation_model](./doc_images/translation_model.png)
+
+- 注意自己的文件路径
+
+(2) 测试代码
+
+- 这个测试代码只需要在上个测试代码上修改一下就可以了
+
+  ```C++
+  #include <opencv2/opencv.hpp>
+  #include <opencv2/dnn.hpp>
+  #include <iostream>
+
+  using namespace cv;
+  using namespace cv ::dnn;
+  using namespace std;
+
+  string model = "E:/OpenVINO_Study_Log/ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pb";
+  string config = "E:/OpenVINO_Study_Log/ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pbtxt";
+
+  string model_xml = "C:/IntelSWTools/openvino_2020.1.033/deployment_tools/model_optimizer/frozen_inference_graph.xml";
+  string model_bin = "C:/IntelSWTools/openvino_2020.1.033/deployment_tools/model_optimizer/frozen_inference_graph.bin";
+
+
+  int main(int argc, char** argv) {
+    Mat src = imread("C:/Users/LWL/Desktop/dl.jpg");	//读取图片
+    if (src.empty()) {
+      printf("Load image failed");
+      return -1;
+    }
+    
+    Net net = readNetFromModelOptimizer(model_xml, model_bin);
+    //Net net = readNetFromTensorflow(model, config);	// 载入模型网络
+
+    net.setPreferableBackend(DNN_BACKEND_INFERENCE_ENGINE);		// 指定计算后台设备
+    net.setPreferableTarget(DNN_TARGET_CPU);					// 指定计算设备
+
+    printf("ssd network model loaded...\n");
+    Mat blob = blobFromImage(src, 1.0, Size(300, 300), Scalar(), true, false, 5);
+    net.setInput(blob);
+    Mat detection = net.forward();
+
+    // 获取推断时间
+    vector<double> layerTimigs;
+    double freq = getTickFrequency() / 1000;
+    double time = net.getPerfProfile(layerTimigs) / freq;
+    ostringstream ss;
+    ss << "infernece:" << time << "ms";
+    putText(src, ss.str(), Point(50, 50), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 0, 0), 2, 8);	// 在图片上打印推理所用时间
+
+
+    Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
+    cout << detectionMat << endl;
+    float threshold = 0.7;
+
+    // 圈出可能目标
+    for (int i = 0; i < detectionMat.rows; i++) {
+      float confidence = detectionMat.at<float>(i, 2);
+      if (confidence > threshold) {
+        int obj_index = (size_t)detectionMat.at<float>(i, 1);
+        float tl_x = detectionMat.at<float>(i, 3) * src.cols;
+        float tl_y = detectionMat.at<float>(i, 4) * src.rows;
+        float br_x = detectionMat.at<float>(i, 5) * src.cols;
+        float br_y = detectionMat.at<float>(i, 6) * src.rows;
+        Rect object_box((int)tl_x, (int)tl_y, int(br_x - tl_x), int(br_y - tl_y));
+        rectangle(src, object_box, Scalar(0, 0, 255), 2, 8, 0);
+      }
+    }
+
+    imshow("ssd_detection", src);			// 显示图片
+    waitKey(0);								// 等待用户按键
+    destroyAllWindows();					// 摧毁所有显示图片的窗口
+    return 0;
+  }
+  ```
+
+(3) 测试结果
+
+- 如果不出意外，这个代码的输出结果会与上一节的输出结果一样。
+![translation_result](./doc_images/translation_result.png)
+
+
+ 
